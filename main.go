@@ -56,19 +56,12 @@ func getSubscription(c echo.Context) error {
     db, err := sql.Open("sqlite3", "subscriptions")
     checkErr(err)
     
-    var (
-        subscriptionId int
-        subscriptionName string
-        subscriptionPeriod string
-    )
-    
-    err = db.QueryRow("SELECT * FROM subscriptions WHERE id = ?", c.Param("id")).Scan(&subscriptionId, &subscriptionName, &subscriptionPeriod)
+    var subscription Subscription
+    err = db.QueryRow("SELECT * FROM subscriptions WHERE id = ?", c.Param("id")).Scan(&subscription.Id, &subscription.Name, &subscription.Period)
     checkErr(err)
     defer db.Close()
     
-    subscription := Subscription{subscriptionId, subscriptionName, subscriptionPeriod}
-    
-    return c.JSON(http.StatusOK, subscription)
+    return c.JSON(http.StatusOK, &subscription)
 }
 
 func checkErr(err error) {
