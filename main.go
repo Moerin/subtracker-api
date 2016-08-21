@@ -40,24 +40,15 @@ func listSubscriptions(c echo.Context) error {
     
     defer rows.Close()
     
-    var subscriptions interface{}
     for rows.Next() {
         err = rows.Scan(&subscriptionId, &subscriptionName, &subscriptionPeriod)
         checkErr(err)
         
-        /*
-         * Todo
-         * - Create an array
-         * - Create a structure
-         */
-        subscriptions = map[string]interface{}{
-            "id": subscriptionId,
-            "name": subscriptionName,
-            "period": subscriptionPeriod,
-        }
+        // Todo: fix this
+        //subscriptions := Subscription{subscriptionId, subscriptionName, subscriptionPeriod}
     }
     
-    return c.JSON(http.StatusOK, subscriptions)
+    return c.JSON(http.StatusOK, "todo")
 }
 
 func getSubscription(c echo.Context) error {
@@ -75,12 +66,8 @@ func getSubscription(c echo.Context) error {
     checkErr(err)
     defer db.Close()
     
-    subscription := map[string]interface{}{
-        "id": subscriptionId,
-        "name": subscriptionName,
-        "period": subscriptionPeriod,
-    }
-   
+    subscription := Subscription{subscriptionId, subscriptionName, subscriptionPeriod}
+    
     return c.JSON(http.StatusOK, subscription)
 }
 
@@ -88,4 +75,11 @@ func checkErr(err error) {
     if err != nil {
         log.Fatal(err)
     }
+}
+
+// Todo: add other fields
+type Subscription struct {
+    Id int `json:id`
+    Name string `json:name`
+    Period string `json:period`
 }
