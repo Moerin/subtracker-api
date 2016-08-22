@@ -26,8 +26,8 @@ func main() {
     
     // CRUD
     e.POST("/subscription/add", addSubscription)
-    //e.POST("/subscription/delete/:id", deleteSubscription)
-    //e.POST("/subscription/update/:id", updateSubscription)
+    e.POST("/subscription/delete", deleteSubscription)
+    e.POST("/subscription/update/:id", updateSubscription)
     
     // Server
     fmt.Println("Serving on port", serverPort)
@@ -87,6 +87,35 @@ func addSubscription(c echo.Context) error {
     defer db.Close() 
     
     return c.String(http.StatusCreated, "Subscription created")
+}
+
+func deleteSubscription(c echo.Context) error {
+    db, err := sql.Open("sqlite3", "subscriptions") 
+    checkErr(err)
+    
+    stmt, err := db.Prepare("DELETE FROM subscriptions WHERE id = ?")
+    checkErr(err)  
+    
+    _, err = stmt.Exec(c.FormValue("id"))
+    checkErr(err)
+    defer db.Close() 
+    
+    return c.String(http.StatusCreated, "Subscription deleted")
+}
+
+// TODO
+func updateSubscription(c echo.Context) error {
+    db, err := sql.Open("sqlite3", "subscriptions") 
+    checkErr(err)
+    
+    stmt, err := db.Prepare("UPDATE subscriptions SET ?  = ? WHERE id = ?")
+    checkErr(err)  
+    
+    _, err = stmt.Exec(c.Param("id"))
+    checkErr(err)
+    defer db.Close() 
+    
+    return c.String(http.StatusCreated, "Subscription deleted")
 }
 
 // Todo: add other fields
