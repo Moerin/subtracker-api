@@ -1,7 +1,7 @@
 package main
 
 import (
-	"database/sql"
+	//"database/sql"
 	"fmt"
 	"log"
 	"net/http"
@@ -18,6 +18,19 @@ import (
 )
 
 const serverPort = ":8080"
+
+func init() {
+	schema := `CREATE TABLE IF NOT EXISTS subscriptions (
+    id INTEGER PRIMARY KEY,
+    name TEXT NULL,
+    duration INTEGER NULL);`
+
+	db, err := sqlx.Connect("sqlite3", "subscriptions")
+	checkErr(err)
+
+	_, err = db.Exec(schema)
+	checkErr(err)
+}
 
 func main() {
 	e := echo.New()
@@ -43,7 +56,8 @@ func listSubscriptions(c echo.Context) error {
 	checkErr(err)
 
 	subscriptions := []Subscription{}
-	db.Select(&subscriptions, "SELECT * FROM subscriptions")
+	err = db.Select(&subscriptions, "SELECT * FROM subscriptions")
+	checkErr(err)
 
 	defer db.Close()
 
@@ -51,13 +65,13 @@ func listSubscriptions(c echo.Context) error {
 }
 
 func getSubscription(c echo.Context) error {
-	// Open database connection
+	// Connect database connection
 	db, err := sqlx.Connect("sqlite3", "subscriptions")
 	checkErr(err)
 
 	var ID = c.Param("id")
-	subscription := Subscription{ID: ID}
-	db.NamedQuery("SELECT * FROM subscriptions WHERE id =:id", subscription)
+	subscription := Subscription{}
+	err = db.Get(&subscription, "SELECT * FROM subscriptions WHERE id =$1", ID)
 	checkErr(err)
 
 	defer db.Close()
@@ -72,13 +86,13 @@ func checkErr(err error) {
 }
 
 func addSubscription(c echo.Context) error {
-	db, err := sql.Open("sqlite3", "subscriptions")
+	db, err := sqlx.Connect("sqlite3", "subscriptions")
 	checkErr(err)
 
 	subscriptionName := c.FormValue("name")
-	subscriptionPeriod := c.FormValue("period")
+	subscriptionPeriod := c.FormValue("duration")
 
-	stmt, err := db.Prepare("INSERT INTO subscriptions(name, duration) VALUES (?, ?)")
+	stmt, err := db.Preparex("INSERT INTO subscriptions(name, duration) VALUES (?, ?)")
 	checkErr(err)
 
 	_, err = stmt.Exec(subscriptionName, subscriptionPeriod)
@@ -89,7 +103,7 @@ func addSubscription(c echo.Context) error {
 }
 
 func deleteSubscription(c echo.Context) error {
-	db, err := sql.Open("sqlite3", "subscriptions")
+	db, err := sqlx.Connect("sqlite3", "subscriptions")
 	checkErr(err)
 
 	stmt, err := db.Prepare("DELETE FROM subscriptions WHERE id = ?")
@@ -104,22 +118,40 @@ func deleteSubscription(c echo.Context) error {
 
 // TODO
 func updateSubscription(c echo.Context) error {
-	db, err := sql.Open("sqlite3", "subscriptions")
+	db, err := sqlx.Connect("sqlite3", "subscriptions")
 	checkErr(err)
 
-	stmt, err := db.Prepare("UPDATE subscriptions SET ?  = ? WHERE id = ?")
+	fmt.Println(c.FormParams())
+
+	index := len(c.FormParams())
+	var columns = "UPDATE subscriptions SET "
+	i := 0
+	for k, v := range c.FormParams() {
+		if i == (index - 1) {
+			columns += k + " = " + "\"" + v[0] + "\""
+		} else {
+			columns += k + " = " + "\"" + v[0] + "\"" + ", "
+		}
+		fmt.Println(k, v)
+		i++
+	}
+
+	columns += " WHERE id = ?"
+
+	fmt.Println(columns)
+	stmt, err := db.Preparex(columns)
 	checkErr(err)
 
 	_, err = stmt.Exec(c.Param("id"))
 	checkErr(err)
 	defer db.Close()
 
-	return c.String(http.StatusCreated, "Subscription deleted")
+	return c.String(http.StatusCreated, "Subscription Updated")
 }
 
 // Todo: add other fields
 type Subscription struct {
-	ID       string `db:id`
-	Name     string `db:name`
-	Duration string `db:duration`
+	ID       int    `db:"id"`
+	Name     string `db:"name"`
+	Duration int    `db:"duration"`
 }
