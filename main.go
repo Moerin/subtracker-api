@@ -25,11 +25,15 @@ func init() {
     name TEXT NULL,
     duration INTEGER NULL);`
 
-	db, err := sqlx.Connect("sqlite3", "subscriptions")
+	db, err := dbConnect()
 	checkErr(err)
 
 	_, err = db.Exec(schema)
 	checkErr(err)
+}
+
+func dbConnect() (*sqlx.DB, error) {
+	return sqlx.Connect("sqlite3", "subscriptions")
 }
 
 func main() {
@@ -42,8 +46,8 @@ func main() {
 
 	// CRUD
 	e.POST("/subscription/add", addSubscription)
-	e.POST("/subscription/delete", deleteSubscription)
-	e.POST("/subscription/update/:id", updateSubscription)
+	e.DELETE("/subscription/delete/:id", deleteSubscription)
+	e.PUT("/subscription/update/:id", updateSubscription)
 
 	// Server
 	fmt.Println("Serving on port", serverPort)
@@ -52,7 +56,7 @@ func main() {
 
 func listSubscriptions(c echo.Context) error {
 	// Open database connection
-	db, err := sqlx.Connect("sqlite3", "subscriptions")
+	db, err := dbConnect()
 	checkErr(err)
 
 	subscriptions := []Subscription{}
@@ -66,7 +70,7 @@ func listSubscriptions(c echo.Context) error {
 
 func getSubscription(c echo.Context) error {
 	// Connect database connection
-	db, err := sqlx.Connect("sqlite3", "subscriptions")
+	db, err := dbConnect()
 	checkErr(err)
 
 	var ID = c.Param("id")
@@ -86,7 +90,7 @@ func checkErr(err error) {
 }
 
 func addSubscription(c echo.Context) error {
-	db, err := sqlx.Connect("sqlite3", "subscriptions")
+	db, err := dbConnect()
 	checkErr(err)
 
 	subscriptionName := c.FormValue("name")
@@ -103,26 +107,26 @@ func addSubscription(c echo.Context) error {
 }
 
 func deleteSubscription(c echo.Context) error {
-	db, err := sqlx.Connect("sqlite3", "subscriptions")
+	db, err := dbConnect()
 	checkErr(err)
 
 	stmt, err := db.Prepare("DELETE FROM subscriptions WHERE id = ?")
 	checkErr(err)
 
-	_, err = stmt.Exec(c.FormValue("id"))
+	_, err = stmt.Exec(c.Param("id"))
 	checkErr(err)
 	defer db.Close()
 
 	return c.String(http.StatusCreated, "Subscription deleted")
 }
 
-// TODO
 func updateSubscription(c echo.Context) error {
-	db, err := sqlx.Connect("sqlite3", "subscriptions")
+	db, err := dbConnect()
 	checkErr(err)
 
 	fmt.Println(c.FormParams())
 
+	// TODO
 	index := len(c.FormParams())
 	var columns = "UPDATE subscriptions SET "
 	i := 0
