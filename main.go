@@ -55,7 +55,6 @@ func main() {
 }
 
 func listSubscriptions(c echo.Context) error {
-	// Open database connection
 	db, err := dbConnect()
 	checkErr(err)
 
@@ -69,7 +68,6 @@ func listSubscriptions(c echo.Context) error {
 }
 
 func getSubscription(c echo.Context) error {
-	// Connect database connection
 	db, err := dbConnect()
 	checkErr(err)
 
