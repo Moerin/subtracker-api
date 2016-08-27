@@ -1,10 +1,12 @@
 package main
 
 import (
-	//"database/sql"
 	"fmt"
 	"log"
 	"net/http"
+	
+	// Project related packages
+	"github.com/yonmey/subtracker-api/subscription"
 
 	// Echo framework
 	"github.com/labstack/echo"
@@ -58,7 +60,7 @@ func listSubscriptions(c echo.Context) error {
 	db, err := dbConnect()
 	checkErr(err)
 
-	subscriptions := []Subscription{}
+	subscriptions := []subscription.Subscription{}
 	err = db.Select(&subscriptions, "SELECT * FROM subscriptions")
 	checkErr(err)
 
@@ -72,7 +74,7 @@ func getSubscription(c echo.Context) error {
 	checkErr(err)
 
 	var ID = c.Param("id")
-	subscription := Subscription{}
+	subscription := subscription.Subscription{}
 	err = db.Get(&subscription, "SELECT * FROM subscriptions WHERE id =$1", ID)
 	checkErr(err)
 
@@ -149,11 +151,4 @@ func updateSubscription(c echo.Context) error {
 	defer db.Close()
 
 	return c.String(http.StatusCreated, "Subscription Updated")
-}
-
-// Todo: add other fields
-type Subscription struct {
-	ID       int    `db:"id"`
-	Name     string `db:"name"`
-	Duration int    `db:"duration"`
 }
