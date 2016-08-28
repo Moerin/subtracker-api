@@ -81,15 +81,15 @@ func Delete(c echo.Context) error {
 // Update Updates a subscription
 func Update(c echo.Context) error {
 	db, err := dbc.Connect()
-	errorHandler.CheckErr(err)	
-	
+	errorHandler.CheckErr(err)
+
 	var updateColumns string
 	for k := range c.FormParams() {
 		updateColumns += k + " = \"" + c.FormValue(k) + "\", "
 	}
-	
+
 	updateColumns = strings.TrimRight(updateColumns, ", ")
-	
+
 	stmt, err := db.Preparex("UPDATE subscriptions SET " + updateColumns + " WHERE id = ?")
 	errorHandler.CheckErr(err)
 
