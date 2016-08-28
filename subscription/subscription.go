@@ -2,6 +2,7 @@ package subscription
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/labstack/echo"
 	"github.com/yonmey/subtracker-api/lib/dbc"
@@ -80,24 +81,16 @@ func Delete(c echo.Context) error {
 // Update Updates a subscription
 func Update(c echo.Context) error {
 	db, err := dbc.Connect()
-	errorHandler.CheckErr(err)
-
-	// TODO
-	index := len(c.FormParams())
-	var columns = "UPDATE subscriptions SET "
-	i := 0
-	for k, v := range c.FormParams() {
-		if i == (index - 1) {
-			columns += k + " = " + "\"" + v[0] + "\""
-		} else {
-			columns += k + " = " + "\"" + v[0] + "\"" + ", "
-		}
-		i++
+	errorHandler.CheckErr(err)	
+	
+	var updateColumns string
+	for k := range c.FormParams() {
+		updateColumns += k + " = \"" + c.FormValue(k) + "\", "
 	}
-
-	columns += " WHERE id = ?"
-
-	stmt, err := db.Preparex(columns)
+	
+	updateColumns = strings.TrimRight(updateColumns, ", ")
+	
+	stmt, err := db.Preparex("UPDATE subscriptions SET " + updateColumns + " WHERE id = ?")
 	errorHandler.CheckErr(err)
 
 	_, err = stmt.Exec(c.Param("id"))
