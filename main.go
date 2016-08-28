@@ -14,8 +14,11 @@ import (
 
 const serverPort = ":8080"
 
-func main() {
+func init() {
 	dbc.DbInit()
+}
+
+func main() {
 	e := echo.New()
 
 	// Routing
